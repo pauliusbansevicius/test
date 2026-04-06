@@ -4,44 +4,52 @@ This repository contains the documentation and technical specifications for a **
 
 ---
 
-## [cite_start]Bill of Materials (B.O.M) [cite: 2]
+## Bill of Materials (B.O.M) 
 
 | Component | Specification | Description |
 | :--- | :--- | :--- |
-| **V1** | 12V DC | [cite_start]Power supply (PC PSU or car battery)[cite: 11, 22]. |
-| **M1, M2** | IRFP250N | [cite_start]NMOSFETs for switching the resonant circuit[cite: 8, 33]. |
-| **L1** | 2-3µH | [cite_start]Air wound coil: 10AWG wire, 5cm diameter, 8-10 turns[cite: 7]. |
-| **L2, L3** | 100µH | [cite_start]20A toroidal inductors (choke) to protect the PSU[cite: 3, 20]. |
-| **C1 - C6** | 1µF (6µF total) | [cite_start]MKP10 polypropylene capacitors for high frequencies[cite: 6, 25, 26]. |
-| **D1, D2** | 12V Zener | [cite_start]Limits NMOSFET gate voltage to 12V[cite: 10, 30]. |
-| **D3, D4** | MUR460 / UF4007 | [cite_start]UltraFast diodes with ~75ns recovery time[cite: 4, 28, 29]. |
-| **R1, R2** | 10kΩ 1W | [cite_start]Pull-down resistors to clear gate charge[cite: 9, 32]. |
-| **R3, R4** | 470Ω 1W | [cite_start]Resistors to limit current to the NMOSFET gates[cite: 5, 31]. |
+| **V1** | 12V DC | Power supply (PC PSU or car battery). |
+| **M1, M2** | IRFP250N | NMOSFETs for switching the resonant circuit. |
+| **L1** | 2-3µH | Air wound coil: 10AWG wire, 5cm diameter, 8-10 turns. |
+| **L2, L3** | 100µH | 20A toroidal inductors (choke) to protect the PSU. |
+| **C1 - C6** | 1µF (6µF total) | MKP10 polypropylene capacitors for high frequencies. |
+| **D1, D2** | 12V Zener | Limits NMOSFET gate voltage to 12V. |
+| **D3, D4** | MUR460 / UF4007 | UltraFast diodes with ~75ns recovery time. |
+| **R1, R2** | 10kΩ 1W | Pull-down resistors to clear gate charge. |
+| **R3, R4** | 470Ω 1W | Resistors to limit current to the NMOSFET gates. |
 
 ---
 
 ## Circuit Schematic & Analysis
 
 ![ZVS Driver Schematic](ZVS_driver_schematic.png)
-[cite_start]*Figure 1: ZVS driver and induction heater schematic with FFT analysis[cite: 1].*
+*Figure 1: ZVS driver and induction heater schematic with FFT analysis.*
 
-### [cite_start]Performance Parameters [cite: 14]
-* [cite_start]**Efficiency:** Approximately 90%[cite: 18].
-* [cite_start]**Idle Current:** 1-1.5A[cite: 16].
-* [cite_start]**Heating Current:** Up to 20A[cite: 16].
-* [cite_start]**Output:** AC voltage through the L1 coil heats the metal[cite: 13].
+### Performance Parameters 
+* **Efficiency:** Approximately 90%.
+* **Idle Current:** 1-1.5A.
+* **Heating Current:** Up to 20A.
+* **Output:** AC voltage through the L1 coil heats the metal.
 
 ![Output Waveform](Output_signals.png)
-[cite_start]*Figure 2: AC voltage waveform running through the L1 coil[cite: 12].*
+*Figure 2: AC voltage waveform running through the L1 coil.*
 
 ---
 
 ## How it Works
 
 The ZVS induction heater is a **self-oscillating parallel resonant inverter**.
+ZVS induction heater can be split into two parts: **a parallel resonant circuit** and **a circuit that adds energy to the resonant circuit**
 
-* [cite_start]**Resonance:** Capacitors C1-C6 and inductor L1 form a parallel resonant circuit[cite: 23]. [cite_start]This stores energy and boosts current up to 40A[cite: 24].
-* [cite_start]**Zero Voltage Switching (ZVS):** MOSFETs (M1, M2) switch sides of the resonant circuit to ground and the power supply to keep oscillations going[cite: 33]. [cite_start]This replaces energy lost to resistance in the components[cite: 34].
-* [cite_start]**Feedback:** UltraFast diodes (D3, D4) trigger the MOSFET on the opposite side when the cathode voltage jumps, ensuring synchronization[cite: 28].
-* [cite_start]**Protection:** Choke inductors (L2, L3) lower startup current and isolate the 12V supply from ~36V peaks to prevent damaging the power source[cite: 20].
-* [cite_start]**Induction:** The high-frequency AC voltage in coil L1 creates a magnetic field that induces heat in metal objects placed inside[cite: 13].
+
+1.  **Power Application**: When the power supply is connected to the ZVS driver, the voltage potential increases on both sides of the resonant circuit and at the gates of the NMOSFETs.
+2.  **Asymmetry and Startup**: Because real-world components are not perfect, one NMOSFET will always turn on slightly faster than the other. In the simulation, this is achieved by using slightly different values for resistors **R3** and **R4**. Without this intentional imbalance in a simulation, both NMOSFETs might turn on halfway simultaneously, shorting the power supply and preventing the resonant circuit from oscillating.
+3.  **Initial Switching**: Once one NMOSFET turns on—for example, **M2**—it connects the **left** side of the resonant circuit to 0V (ground). At the same moment, **M1** is kept off because its gate is pulled to ground through diode **D3**.
+4.  **Initiating Oscillation**: The voltage at the drain of **M1** remains high because **M1** is not connected to ground. This high potential on the **right** side of the resonant circuit initiates the oscillations.
+5.  **Resonant Cycle**: The voltage within the resonant circuit begins to rise and then fall. When the voltage on the **right** side of the resonant circuit drops to 0V, the gate of **M2** is pulled to ground through diode **D4**.
+6.  **Alternating Cycles**: After **M2** closes, the potential at the gate of **M1** increases until **M1** turns on, which then shorts the **right** side of the resonant circuit to ground. This continuous switching maintains the ZVS oscillations. 
+7.  **Efficiency and Heat**: The primary advantage of **Zero Voltage Switching (ZVS)** is that the NMOSFETs are only switched when the voltage across them is at 0V (potential between drain and source is 0V). Theoretically, this makes the circuit nearly 100% efficient. However, in practice, oscillations are not perfect; the NMOSFETs still generate heat and require substantial heatsinks for cooling. Practical efficiency usually ranges between **70-90%**.
+8.  **Induction Heating**: The high current flowing through the work coil (**L1**) creates a powerful magnetic field. When a piece of metal is placed inside **L1**, eddy currents are induced within it, which rapidly heat the metal.
+
+
+
