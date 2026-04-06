@@ -1,6 +1,6 @@
 # ZVS Induction Heater Manual
 
-[cite_start]This repository contains the documentation and technical specifications for a **Zero Voltage Switching (ZVS)** induction heater[cite: 1].
+This repository contains the documentation and technical specifications for a **Zero Voltage Switching (ZVS)** induction heater.
 
 ---
 
